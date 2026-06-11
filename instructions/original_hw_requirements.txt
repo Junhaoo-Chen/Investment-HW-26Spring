@@ -1,0 +1,31 @@
+Project of Investment, 2026 (15% in final grading)
+Task 1
+Suppose you are an investor with savings and you want to allocate your wealth into
+10 industrial indices, e.g.:农林牧渔，采矿业，制造业，水电煤气……
+• Collect daily data from 2015 to 2025 (11 years) generate information you need:
+average returns, standard deviation, and correlations. Give a clear description
+about data and data source.
+• Collect risk-free rate on daily basis (choose one among: government
+short-term bonds, bank saving rates, SHIBOR, Repo rates…)
+• Make any assumption that you think necessary to support your project and
+justify them briefly, e.g. Utility function, Risk tolerance level, constant
+parameters
+• Use the portfolio theory and three steps we learn in the class to derive the
+structure of the optimal risky portfolio first and then the optimal portfolio.
+A detailed quantitative process is required. Provide any supportive graph or
+table.
+• Show your codes to support your results or specify how you apply a statistical
+software or a toolbox to do optimization in details.
+• No more than 5 pages!
+Task 2
+ Download Fama-French 3 factors in China from WIND or any database for
+the same period in Task 1;
+ Pick one more factor you are interested with and download the factor if
+available or construct the factor yourself. Give a clear explanation about how
+to construct the factor whichever way you obtain the data.
+ Verify if all factors can effectively explain equity premium of your 10 indices
+in Task 1. You need to 1) Implete the two-passes regression; 2) Write down
+the regression models; 3) In every step, present the estimates, t-statistics,
+R-squares in tables clearly; 4) Explain your regression results.
+• You can submit all data, regression results and analysis in an excel file.
+Note: Task 1 and Task 2 can be submitted separately in two documents.
