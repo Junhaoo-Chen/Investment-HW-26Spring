@@ -103,7 +103,7 @@ def compute_correlation(returns):
 # 3. MARKOWITZ STEP 1: EFFICIENT FRONTIER (RISKY ASSETS ONLY)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def compute_frontier_analytical(mu, Sigma):
+def compute_frontier_analytical(mu, Sigma, tang_mu=None):
     n = len(mu)
     ones = np.ones(n)
     Sigma_inv = np.linalg.inv(Sigma)
@@ -117,7 +117,10 @@ def compute_frontier_analytical(mu, Sigma):
     mu_gmv = A_val / C_val
     sigma_gmv = np.sqrt(1.0 / C_val)
 
-    mu_range = np.linspace(mu_gmv - 0.0005, mu.max() + 0.0008, 500)
+    upper_limit = mu.max() + 0.0008
+    if tang_mu is not None:
+        upper_limit = max(upper_limit, tang_mu * 1.15)
+    mu_range = np.linspace(mu_gmv - 0.0005, upper_limit, 800)
     sigma_range = np.sqrt((C_val * mu_range**2 - 2 * A_val * mu_range + B_val) / D_val)
 
     upper_mask = mu_range >= mu_gmv
@@ -804,19 +807,19 @@ def main():
     assert np.all(eigvals > 0), f"Covariance matrix not positive definite: {eigvals}"
     print(f"\n[3] Covariance matrix eigenvalues (all positive): min={eigvals.min():.2e}, max={eigvals.max():.2e}")
 
-    # Step 1: Efficient Frontier
-    print("\n[4] Step 1: Computing efficient frontier...")
-    frontier = compute_frontier_analytical(mu, Sigma)
-    print(f"    GMV: E(r) = {frontier['mu_gmv']*TRADING_DAYS*100:.4f}% ann, "
-          f"sigma = {frontier['sigma_gmv']*np.sqrt(TRADING_DAYS)*100:.4f}% ann")
-
-    # Step 2: Tangency Portfolio & CML
+    # Step 2: Tangency Portfolio & CML (compute before frontier so we know the range)
     print("\n[5] Step 2: Computing tangency portfolio...")
     tangency = compute_tangency(mu, Sigma, rf_avg)
     print(f"    Tangency: E(r) = {tangency['mu']*TRADING_DAYS*100:.4f}% ann, "
           f"sigma = {tangency['sigma']*np.sqrt(TRADING_DAYS)*100:.4f}% ann, "
           f"Sharpe = {tangency['sharpe']*np.sqrt(TRADING_DAYS):.4f}")
     print(f"    Weights: {dict(zip([INDEX_NAMES[c] for c in INDEX_ORDER], [f'{w:.4f}' for w in tangency['w']]))}")
+
+    # Step 1: Efficient Frontier (extend range to include tangency point)
+    print("\n[4] Step 1: Computing efficient frontier...")
+    frontier = compute_frontier_analytical(mu, Sigma, tang_mu=tangency['mu'])
+    print(f"    GMV: E(r) = {frontier['mu_gmv']*TRADING_DAYS*100:.4f}% ann, "
+          f"sigma = {frontier['sigma_gmv']*np.sqrt(TRADING_DAYS)*100:.4f}% ann")
 
     # Step 3: Complete Portfolio
     print("\n[6] Step 3: Computing complete portfolio...")
