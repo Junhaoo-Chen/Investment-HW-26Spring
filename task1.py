@@ -217,16 +217,6 @@ def plot_efficient_frontier(frontier, tangency, rf, mu, Sigma, y_star, mu_comple
             'D', color='#6A1B9A', markersize=10, label=lbl_comp, zorder=5,
             markeredgecolor='white', markeredgewidth=1.5)
 
-    for i, code in enumerate(INDEX_ORDER):
-        sigma_i = np.sqrt(Sigma[i, i]) * ann_factor_sigma
-        mu_i = mu[i] * ann_factor_mu
-        ax.scatter(sigma_i, mu_i, color='#455A64', s=50, marker='^', zorder=4,
-                   edgecolors='white', linewidths=0.8)
-        ax.annotate(INDEX_NAMES[code], (sigma_i, mu_i),
-                    textcoords="offset points", xytext=(6, 6), fontsize=7.5,
-                    fontproperties=_CN_FONT, color='#37474F',
-                    fontstyle='italic' if lang == 'en' else 'normal')
-
     # Indifference curve through the complete portfolio
     U_star = mu_complete - 0.5 * A_RISK_AVERSION * sigma_complete**2
     ic_sigma = np.linspace(0, frontier['sigma_range'].max() * 0.6, 300)
