@@ -175,7 +175,8 @@ def compute_complete_portfolio(mu_tang, sigma_tang, rf, A):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def plot_efficient_frontier(frontier, tangency, rf, mu, Sigma, y_star, mu_complete, sigma_complete, lang='en'):
-    fig, ax = plt.subplots(figsize=(10, 7))
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, ax = plt.subplots(figsize=(11, 7.5))
     fp = _CN_FONT if lang == 'cn' else None
 
     ann_factor_mu = TRADING_DAYS * 100
@@ -184,78 +185,129 @@ def plot_efficient_frontier(frontier, tangency, rf, mu, Sigma, y_star, mu_comple
     f_sigma = frontier['sigma_range'] * ann_factor_sigma
     f_mu = frontier['mu_range'] * ann_factor_mu
 
+    ax.set_facecolor('#FAFAFA')
+    fig.patch.set_facecolor('white')
+    ax.grid(True, color='#E0E0E0', linewidth=0.6, alpha=0.8)
+    ax.set_axisbelow(True)
+
     upper = frontier['upper_mask']
-    ax.plot(f_sigma[~upper], f_mu[~upper], 'b--', alpha=0.4, linewidth=1)
+    ax.plot(f_sigma[~upper], f_mu[~upper], color='#90CAF9', linestyle='--',
+            alpha=0.5, linewidth=1.2)
     lbl_ef = 'Efficient Frontier' if lang == 'en' else '有效前沿'
-    ax.plot(f_sigma[upper], f_mu[upper], 'b-', linewidth=2, label=lbl_ef)
+    ax.plot(f_sigma[upper], f_mu[upper], color='#1565C0', linewidth=2.5, label=lbl_ef)
 
     sigma_cml, mu_cml = compute_cml(rf, tangency['mu'], tangency['sigma'],
                                      frontier['sigma_range'].max() * 1.3)
     lbl_cml = 'Capital Market Line (CML)' if lang == 'en' else '资本市场线 (CML)'
     ax.plot(sigma_cml * ann_factor_sigma, mu_cml * ann_factor_mu,
-            'r-', linewidth=2, label=lbl_cml)
+            color='#C62828', linewidth=2, linestyle='-', label=lbl_cml, alpha=0.85)
 
     lbl_gmv = 'Global Min-Variance Portfolio' if lang == 'en' else '全局最小方差组合'
     ax.plot(frontier['sigma_gmv'] * ann_factor_sigma, frontier['mu_gmv'] * ann_factor_mu,
-            'gs', markersize=10, label=lbl_gmv, zorder=5)
+            's', color='#2E7D32', markersize=11, label=lbl_gmv, zorder=5,
+            markeredgecolor='white', markeredgewidth=1.5)
 
     lbl_tang = 'Tangency Portfolio' if lang == 'en' else '切线组合 (最优风险组合)'
     ax.plot(tangency['sigma'] * ann_factor_sigma, tangency['mu'] * ann_factor_mu,
-            'r*', markersize=18, label=lbl_tang, zorder=5)
+            '*', color='#C62828', markersize=20, label=lbl_tang, zorder=5,
+            markeredgecolor='white', markeredgewidth=1)
 
-    lbl_comp = f'Complete Portfolio (y*={y_star:.4f})' if lang == 'en' else f'完整组合 (y*={y_star:.4f})'
+    lbl_comp = f'Complete Portfolio (y*={y_star:.2f})' if lang == 'en' else f'完整组合 (y*={y_star:.2f})'
     ax.plot(sigma_complete * ann_factor_sigma, mu_complete * ann_factor_mu,
-            'mo', markersize=10, label=lbl_comp, zorder=5)
+            'D', color='#6A1B9A', markersize=10, label=lbl_comp, zorder=5,
+            markeredgecolor='white', markeredgewidth=1.5)
 
     for i, code in enumerate(INDEX_ORDER):
         sigma_i = np.sqrt(Sigma[i, i]) * ann_factor_sigma
         mu_i = mu[i] * ann_factor_mu
-        ax.plot(sigma_i, mu_i, 'k^', markersize=6, zorder=4)
+        ax.scatter(sigma_i, mu_i, color='#455A64', s=50, marker='^', zorder=4,
+                   edgecolors='white', linewidths=0.8)
         ax.annotate(INDEX_NAMES[code], (sigma_i, mu_i),
-                    textcoords="offset points", xytext=(5, 5), fontsize=7,
-                    fontproperties=_CN_FONT)
+                    textcoords="offset points", xytext=(6, 6), fontsize=7.5,
+                    fontproperties=_CN_FONT, color='#37474F',
+                    fontstyle='italic' if lang == 'en' else 'normal')
+
+    # Indifference curve through the complete portfolio
+    U_star = mu_complete - 0.5 * A_RISK_AVERSION * sigma_complete**2
+    ic_sigma = np.linspace(0, frontier['sigma_range'].max() * 0.6, 300)
+    ic_mu = U_star + 0.5 * A_RISK_AVERSION * ic_sigma**2
+    lbl_ic = f'Indifference Curve (A={A_RISK_AVERSION})' if lang == 'en' else f'无差异曲线 (A={A_RISK_AVERSION})'
+    ax.plot(ic_sigma * ann_factor_sigma, ic_mu * ann_factor_mu,
+            color='#FF8F00', linewidth=1.8, linestyle='-.', label=lbl_ic, alpha=0.8)
 
     xlabel = 'Annualized Standard Deviation (%)' if lang == 'en' else '年化标准差 (%)'
     ylabel = 'Annualized Expected Return (%)' if lang == 'en' else '年化期望收益率 (%)'
     title = ('Efficient Frontier, CML, and Optimal Portfolios' if lang == 'en'
              else '有效前沿、资本市场线与最优组合')
-    ax.set_xlabel(xlabel, fontsize=12, fontproperties=fp)
-    ax.set_ylabel(ylabel, fontsize=12, fontproperties=fp)
-    ax.set_title(title, fontsize=14, fontproperties=fp)
-    ax.legend(fontsize=9, loc='upper left', prop=_CN_FONT if lang == 'cn' else None)
-    ax.grid(True, alpha=0.3)
+    ax.set_xlabel(xlabel, fontsize=12, fontproperties=fp, color='#212121')
+    ax.set_ylabel(ylabel, fontsize=12, fontproperties=fp, color='#212121')
+    ax.set_title(title, fontsize=14, fontproperties=fp, color='#212121', fontweight='bold', pad=15)
+
+    legend = ax.legend(fontsize=9, loc='upper left',
+                       prop=_CN_FONT if lang == 'cn' else None,
+                       frameon=True, fancybox=True, shadow=False,
+                       framealpha=0.9, edgecolor='#BDBDBD')
+    legend.get_frame().set_facecolor('white')
+
+    for spine in ax.spines.values():
+        spine.set_color('#BDBDBD')
+        spine.set_linewidth(0.8)
+    ax.tick_params(colors='#424242', labelsize=10)
 
     suffix = '' if lang == 'en' else '_cn'
     path = OUTPUT_DIR + f'efficient_frontier{suffix}.png'
-    fig.savefig(path, dpi=300, bbox_inches='tight')
+    fig.savefig(path, dpi=300, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     print(f"Saved {path}")
     return path
 
 
 def plot_weights(w_tang, lang='en'):
-    fig, ax = plt.subplots(figsize=(10, 5))
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, ax = plt.subplots(figsize=(11, 5.5))
     fp = _CN_FONT if lang == 'cn' else None
     names = [INDEX_NAMES[c] for c in INDEX_ORDER]
-    colors = ['#2196F3' if w >= 0 else '#F44336' for w in w_tang]
+    colors = ['#1565C0' if w >= 0 else '#C62828' for w in w_tang]
 
-    bars = ax.bar(names, w_tang * 100, color=colors, edgecolor='black', linewidth=0.5)
-    ax.axhline(y=0, color='black', linewidth=0.5)
+    ax.set_facecolor('#FAFAFA')
+    fig.patch.set_facecolor('white')
+    ax.grid(axis='y', color='#E0E0E0', linewidth=0.6, alpha=0.8)
+    ax.grid(axis='x', visible=False)
+    ax.set_axisbelow(True)
+
+    bars = ax.bar(names, w_tang * 100, color=colors, edgecolor='white', linewidth=1.2,
+                  width=0.7, alpha=0.9)
+    ax.axhline(y=0, color='#424242', linewidth=0.8)
+
     ylabel = 'Weight (%)' if lang == 'en' else '权重 (%)'
     title = 'Tangency Portfolio Weights' if lang == 'en' else '切线组合（最优风险组合）权重'
-    ax.set_ylabel(ylabel, fontsize=12, fontproperties=fp)
-    ax.set_title(title, fontsize=14, fontproperties=fp)
-    ax.set_xticklabels(names, rotation=30, ha='right', fontsize=9, fontproperties=_CN_FONT)
+    ax.set_ylabel(ylabel, fontsize=12, fontproperties=fp, color='#212121')
+    ax.set_title(title, fontsize=14, fontproperties=fp, color='#212121', fontweight='bold', pad=15)
+    ax.set_xticklabels(names, rotation=35, ha='right', fontsize=9.5, fontproperties=_CN_FONT)
 
     for bar, w in zip(bars, w_tang):
         ypos = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2., ypos + (1 if ypos >= 0 else -2),
-                f'{w*100:.2f}%', ha='center', va='bottom' if ypos >= 0 else 'top', fontsize=8)
+        offset = 8 if ypos >= 0 else -8
+        ax.text(bar.get_x() + bar.get_width() / 2., ypos + offset,
+                f'{w*100:.1f}%', ha='center',
+                va='bottom' if ypos >= 0 else 'top',
+                fontsize=8.5, fontweight='bold', color='#37474F')
 
-    ax.grid(axis='y', alpha=0.3)
+    for spine in ax.spines.values():
+        spine.set_color('#BDBDBD')
+        spine.set_linewidth(0.8)
+    ax.tick_params(colors='#424242', labelsize=10)
+
+    long_total = w_tang[w_tang >= 0].sum() * 100
+    short_total = w_tang[w_tang < 0].sum() * 100
+    summary = f'Long: {long_total:.1f}%  |  Short: {short_total:.1f}%  |  Net: 100%'
+    ax.text(0.98, 0.02, summary, transform=ax.transAxes, fontsize=8.5,
+            ha='right', va='bottom', color='#616161',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', edgecolor='#BDBDBD', alpha=0.9))
+
     suffix = '' if lang == 'en' else '_cn'
     path = OUTPUT_DIR + f'portfolio_weights{suffix}.png'
-    fig.savefig(path, dpi=300, bbox_inches='tight')
+    fig.savefig(path, dpi=300, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     print(f"Saved {path}")
     return path
